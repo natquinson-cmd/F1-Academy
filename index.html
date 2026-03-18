@@ -936,6 +936,8 @@ body {
 .screen { display: none; }
 .screen.active { display: flex; }
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -1205,27 +1207,67 @@ const END_MESSAGES_LOW = [
     "Chaque grand champion a commencé par apprendre. L'important c'est d'essayer, et tu l'as fait ! 🌟",
 ];
 
+// ===== FIREBASE =====
+const firebaseConfig = {
+    apiKey: "AIzaSyA2QeMTVgKgHaeyGYXcs-AXpi1rO7GikIo",
+    authDomain: "portfolio-dashboard-f0c69.firebaseapp.com",
+    databaseURL: "https://portfolio-dashboard-f0c69-default-rtdb.firebaseio.com",
+    projectId: "portfolio-dashboard-f0c69",
+    storageBucket: "portfolio-dashboard-f0c69.firebasestorage.app",
+    messagingSenderId: "444106868590",
+    appId: "1:444106868590:web:682fbc10b01ccb7bfbe37f"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const profileRef = db.ref('f1academy/profile');
+
 // ===== PERSISTANCE =====
+const DEFAULT_PROFILE = {
+    name: '',
+    xp: 0,
+    totalRaces: 0,
+    bestStreak: 0,
+    trophiesEarned: [],
+    catPlayed: {},
+    mathCorrect: 0,
+    totalCorrect: 0,
+};
+
 function loadProfile() {
     const saved = localStorage.getItem('f1academy_profile');
     if (saved) return JSON.parse(saved);
-    return {
-        name: '',
-        xp: 0,
-        totalRaces: 0,
-        bestStreak: 0,
-        trophiesEarned: [],
-        catPlayed: {},
-        mathCorrect: 0,
-        totalCorrect: 0,
-    };
+    return { ...DEFAULT_PROFILE };
 }
 
 function saveProfile() {
     localStorage.setItem('f1academy_profile', JSON.stringify(profile));
+    // Sync to Firebase
+    profileRef.set(profile).catch(err => console.warn('Firebase save error:', err));
 }
 
 let profile = loadProfile();
+
+// Load from Firebase on startup (Firebase wins if it has data)
+profileRef.once('value').then(snapshot => {
+    const fbData = snapshot.val();
+    if (fbData) {
+        // Merge: Firebase data takes priority if it has more XP (more recent)
+        if (fbData.xp >= profile.xp) {
+            profile = { ...DEFAULT_PROFILE, ...fbData };
+            // Ensure arrays exist
+            if (!Array.isArray(profile.trophiesEarned)) profile.trophiesEarned = [];
+            if (!profile.catPlayed) profile.catPlayed = {};
+            localStorage.setItem('f1academy_profile', JSON.stringify(profile));
+            updateHomeStats();
+        } else {
+            // Local is ahead, push to Firebase
+            saveProfile();
+        }
+    } else {
+        // No Firebase data, push local
+        saveProfile();
+    }
+}).catch(err => console.warn('Firebase load error:', err));
 
 // ===== ETAT DE COURSE =====
 let race = {
