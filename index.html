@@ -1464,6 +1464,7 @@ function startRace(category) {
         bestStreak: 0,
         xpEarned: 0,
         answered: false,
+        pitstopDone: false,
     };
 
     const titles = {
@@ -1501,8 +1502,9 @@ function nextQuestion() {
         return;
     }
 
-    // Pit stop
-    if (race.questionIndex === PITSTOP_AFTER) {
+    // Pit stop (une seule fois)
+    if (race.questionIndex === PITSTOP_AFTER && !race.pitstopDone) {
+        race.pitstopDone = true;
         showPitStop();
         return;
     }
@@ -1924,6 +1926,7 @@ function showFeedback(success, xp) {
 
 function closeFeedback(btn) {
     const overlay = btn.closest('.feedback-overlay');
+    if (!overlay || !overlay.parentNode) return; // déjà fermé par auto-advance
     overlay.remove();
     advanceQuestion();
 }
