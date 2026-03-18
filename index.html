@@ -1527,6 +1527,10 @@ function nextQuestion() {
 
 // ===== PIT STOP =====
 function showPitStop() {
+    // Nettoyer tout overlay résiduel
+    document.querySelectorAll('.feedback-overlay, .pitstop-overlay').forEach(el => el.remove());
+    clearTimeout(race._feedbackTimer);
+
     const tips = [
         "Prends une grande respiration... 🌬️ Inspire, expire. Tu es prêt pour la suite !",
         "Secoue tes mains comme un pilote avant le départ ! 🤚",
@@ -1916,7 +1920,7 @@ function showFeedback(success, xp) {
     document.body.appendChild(overlay);
 
     // Auto-advance après un délai
-    setTimeout(() => {
+    race._feedbackTimer = setTimeout(() => {
         if (overlay.parentNode) {
             overlay.remove();
             advanceQuestion();
@@ -1926,7 +1930,8 @@ function showFeedback(success, xp) {
 
 function closeFeedback(btn) {
     const overlay = btn.closest('.feedback-overlay');
-    if (!overlay || !overlay.parentNode) return; // déjà fermé par auto-advance
+    if (!overlay || !overlay.parentNode) return;
+    clearTimeout(race._feedbackTimer); // annule l'auto-advance
     overlay.remove();
     advanceQuestion();
 }
