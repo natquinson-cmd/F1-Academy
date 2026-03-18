@@ -1298,6 +1298,16 @@ function showGarage() {
 function confirmQuit() {
     if (race.questionIndex > 0) {
         if (!confirm("Tu veux vraiment quitter la course ?")) return;
+        // Sauvegarder les XP gagnés même si la course n'est pas finie
+        if (race.xpEarned > 0) {
+            profile.xp += race.xpEarned;
+            if (race.bestStreak > profile.bestStreak) profile.bestStreak = race.bestStreak;
+            if (race.category !== 'lettres') {
+                profile.mathCorrect = (profile.mathCorrect || 0) + race.correct;
+            }
+            profile.totalCorrect = (profile.totalCorrect || 0) + race.correct;
+            saveProfile();
+        }
     }
     showHome();
 }
