@@ -936,8 +936,6 @@ body {
 .screen { display: none; }
 .screen.active { display: flex; }
 </style>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -1129,6 +1127,8 @@ body {
     </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script>
 // ===== DONNEES & ETAT =====
 const RACE_LENGTH = 8; // questions par course
@@ -1207,19 +1207,26 @@ const END_MESSAGES_LOW = [
     "Chaque grand champion a commencé par apprendre. L'important c'est d'essayer, et tu l'as fait ! 🌟",
 ];
 
-// ===== FIREBASE =====
-const firebaseConfig = {
-    apiKey: "AIzaSyA2QeMTVgKgHaeyGYXcs-AXpi1rO7GikIo",
-    authDomain: "portfolio-dashboard-f0c69.firebaseapp.com",
-    databaseURL: "https://portfolio-dashboard-f0c69-default-rtdb.firebaseio.com",
-    projectId: "portfolio-dashboard-f0c69",
-    storageBucket: "portfolio-dashboard-f0c69.firebasestorage.app",
-    messagingSenderId: "444106868590",
-    appId: "1:444106868590:web:682fbc10b01ccb7bfbe37f"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const profileRef = db.ref('f1academy/profile');
+// ===== FIREBASE (non-bloquant) =====
+let db = null;
+let profileRef = null;
+
+try {
+    const firebaseConfig = {
+        apiKey: "AIzaSyA2QeMTVgKgHaeyGYXcs-AXpi1rO7GikIo",
+        authDomain: "portfolio-dashboard-f0c69.firebaseapp.com",
+        databaseURL: "https://portfolio-dashboard-f0c69-default-rtdb.firebaseio.com",
+        projectId: "portfolio-dashboard-f0c69",
+        storageBucket: "portfolio-dashboard-f0c69.firebasestorage.app",
+        messagingSenderId: "444106868590",
+        appId: "1:444106868590:web:682fbc10b01ccb7bfbe37f"
+    };
+    if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+        profileRef = db.ref('f1academy/profile');
+    }
+} catch(e) { console.warn('Firebase init skipped:', e); }
 
 // ===== PERSISTANCE =====
 const DEFAULT_PROFILE = {
@@ -1241,33 +1248,26 @@ function loadProfile() {
 
 function saveProfile() {
     localStorage.setItem('f1academy_profile', JSON.stringify(profile));
-    // Sync to Firebase
-    profileRef.set(profile).catch(err => console.warn('Firebase save error:', err));
+    if (profileRef) profileRef.set(profile).catch(err => console.warn('Firebase save:', err));
 }
 
 let profile = loadProfile();
 
-// Load from Firebase on startup (Firebase wins if it has data)
-profileRef.once('value').then(snapshot => {
-    const fbData = snapshot.val();
-    if (fbData) {
-        // Merge: Firebase data takes priority if it has more XP (more recent)
-        if (fbData.xp >= profile.xp) {
+// Load from Firebase on startup (async, non-bloquant)
+if (profileRef) {
+    profileRef.once('value').then(snapshot => {
+        const fbData = snapshot.val();
+        if (fbData && fbData.xp >= profile.xp) {
             profile = { ...DEFAULT_PROFILE, ...fbData };
-            // Ensure arrays exist
             if (!Array.isArray(profile.trophiesEarned)) profile.trophiesEarned = [];
             if (!profile.catPlayed) profile.catPlayed = {};
             localStorage.setItem('f1academy_profile', JSON.stringify(profile));
             updateHomeStats();
-        } else {
-            // Local is ahead, push to Firebase
+        } else if (!fbData) {
             saveProfile();
         }
-    } else {
-        // No Firebase data, push local
-        saveProfile();
-    }
-}).catch(err => console.warn('Firebase load error:', err));
+    }).catch(err => console.warn('Firebase load:', err));
+}
 
 // ===== ETAT DE COURSE =====
 let race = {
