@@ -969,6 +969,68 @@ body {
     animation: popIn 0.3s ease;
 }
 
+/* ===== FEUX DE DEPART F1 ===== */
+.startlights-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+}
+.startlights-title {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--f1-white);
+    margin-bottom: 30px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+.startlights-row {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 30px;
+}
+.startlight-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: #1a1a1a;
+    border-radius: 12px;
+    padding: 10px 8px;
+    border: 2px solid #333;
+}
+.startlight {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #2a2a2a;
+    border: 2px solid #444;
+    transition: background 0.15s, box-shadow 0.15s;
+}
+.startlight.red {
+    background: #e10600;
+    box-shadow: 0 0 15px #e10600, 0 0 30px rgba(225,6,0,0.4);
+}
+.startlight.green {
+    background: #00e040;
+    box-shadow: 0 0 15px #00e040, 0 0 30px rgba(0,224,64,0.4);
+}
+.startlights-text {
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--f1-white);
+    min-height: 50px;
+}
+.startlights-text.go {
+    color: #00e040;
+    font-size: 3rem;
+    animation: popIn 0.3s ease;
+}
+
 /* Hide all screens by default, show via JS */
 .screen { display: none; }
 .screen.active { display: flex; }
@@ -1518,7 +1580,59 @@ function startRace(category) {
     updateTrack();
     updateRaceHUD();
     showScreen('screen-game');
-    nextQuestion();
+    showStartLights(() => nextQuestion());
+}
+
+// ===== FEUX DE DEPART F1 =====
+function showStartLights(onGo) {
+    const overlay = document.createElement('div');
+    overlay.className = 'startlights-overlay';
+    overlay.innerHTML = `
+        <div class="startlights-title">Prépare-toi !</div>
+        <div class="startlights-row">
+            ${[0,1,2,3,4].map(i => `
+                <div class="startlight-column">
+                    <div class="startlight" id="light-${i}-top"></div>
+                    <div class="startlight" id="light-${i}-bot"></div>
+                </div>
+            `).join('')}
+        </div>
+        <div class="startlights-text" id="startlights-text"></div>
+    `;
+    document.body.appendChild(overlay);
+
+    // Séquence F1 : allumer les 5 colonnes une par une (chaque seconde)
+    let step = 0;
+    const interval = setInterval(() => {
+        if (step < 5) {
+            // Allume une colonne de feux rouges
+            document.getElementById(`light-${step}-top`).classList.add('red');
+            document.getElementById(`light-${step}-bot`).classList.add('red');
+            step++;
+        } else {
+            // Tous éteints → VERT = GO !
+            clearInterval(interval);
+            // Pause aléatoire courte (0.5 à 1.5s) comme en F1
+            setTimeout(() => {
+                // Éteindre les rouges, allumer en vert
+                for (let i = 0; i < 5; i++) {
+                    const top = document.getElementById(`light-${i}-top`);
+                    const bot = document.getElementById(`light-${i}-bot`);
+                    top.classList.remove('red');
+                    bot.classList.remove('red');
+                    top.classList.add('green');
+                    bot.classList.add('green');
+                }
+                document.getElementById('startlights-text').className = 'startlights-text go';
+                document.getElementById('startlights-text').textContent = 'GO ! GO ! GO !';
+                // Retirer l'overlay après une seconde
+                setTimeout(() => {
+                    overlay.remove();
+                    onGo();
+                }, 1000);
+            }, 500 + Math.random() * 1000);
+        }
+    }, 800);
 }
 
 function updateTrack() {
