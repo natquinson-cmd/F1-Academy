@@ -933,6 +933,42 @@ body {
     color: var(--f1-gold);
 }
 
+.pitstop-timer {
+    margin-top: 18px;
+    text-align: center;
+}
+.pitstop-timer-label {
+    font-size: 0.85rem;
+    color: var(--f1-lightgray);
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+.pitstop-timer-bar {
+    width: 100%;
+    height: 14px;
+    background: var(--f1-darker);
+    border-radius: 7px;
+    overflow: hidden;
+    border: 1px solid var(--f1-gray);
+    position: relative;
+}
+.pitstop-timer-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--f1-red), var(--f1-gold));
+    border-radius: 7px;
+    transition: width 1s linear;
+}
+.pitstop-countdown {
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--f1-gold);
+    margin-top: 6px;
+}
+.pitstop-btn-ready {
+    animation: popIn 0.3s ease;
+}
+
 /* Hide all screens by default, show via JS */
 .screen { display: none; }
 .screen.active { display: flex; }
@@ -1550,12 +1586,44 @@ function showPitStop() {
             <div style="margin-top:8px; color:var(--f1-gold); font-weight:700;">
                 Score : ${race.correct}/${PITSTOP_AFTER} ⭐ ${race.xpEarned} XP
             </div>
-            <button class="btn btn-primary feedback-btn" style="margin-top:20px;" onclick="this.closest('.pitstop-overlay').remove(); nextQuestion();">
-                🏁 C'est reparti !
-            </button>
+            <div class="pitstop-timer">
+                <div class="pitstop-timer-label">🔧 Réparations en cours...</div>
+                <div class="pitstop-timer-bar"><div class="pitstop-timer-fill" id="pitstop-fill"></div></div>
+                <div class="pitstop-countdown" id="pitstop-countdown">5</div>
+            </div>
+            <div id="pitstop-btn-zone" style="margin-top:15px;"></div>
         </div>
     `;
     document.body.appendChild(overlay);
+
+    // Countdown 5 secondes
+    let remaining = 5;
+    const countdownEl = document.getElementById('pitstop-countdown');
+    const fillEl = document.getElementById('pitstop-fill');
+    const btnZone = document.getElementById('pitstop-btn-zone');
+
+    // Lancer la barre de progression
+    requestAnimationFrame(() => {
+        fillEl.style.width = '20%';
+    });
+
+    const countdownInterval = setInterval(() => {
+        remaining--;
+        if (remaining > 0) {
+            countdownEl.textContent = remaining;
+            fillEl.style.width = ((5 - remaining) / 5 * 100) + '%';
+        } else {
+            clearInterval(countdownInterval);
+            fillEl.style.width = '100%';
+            countdownEl.textContent = '✅';
+            document.querySelector('.pitstop-timer-label').textContent = '✅ Voiture prête !';
+            btnZone.innerHTML = `
+                <button class="btn btn-primary feedback-btn pitstop-btn-ready" onclick="this.closest('.pitstop-overlay').remove(); nextQuestion();">
+                    🏁 C'est reparti !
+                </button>
+            `;
+        }
+    }, 1000);
 }
 
 // ===== GENERATEURS D'EXERCICES =====
