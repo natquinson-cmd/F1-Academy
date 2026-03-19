@@ -189,6 +189,7 @@ body {
     padding: 5px;
 }
 .pilot-avatar svg { width: 55px; height: 35px; }
+.pilot-avatar img { width: 60px; height: 60px; object-fit: cover; border-radius: 50%; }
 
 .pilot-name { font-size: 1.3rem; font-weight: 700; }
 .pilot-rank { font-size: 0.85rem; color: var(--f1-gold); }
@@ -621,7 +622,16 @@ body {
 .car-card.locked { opacity: 0.4; }
 
 .car-card .car-emoji { display: block; margin-bottom: 5px; }
-.car-card .car-emoji svg { width: 90px; height: 50px; }
+.car-card .car-emoji img {
+    width: 110px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--f1-gray);
+}
+.car-card.locked .car-emoji img {
+    filter: grayscale(1) brightness(0.4);
+}
 .car-card .car-name { font-size: 0.7rem; color: var(--f1-lightgray); }
 .car-card .car-req { font-size: 0.6rem; color: var(--f1-gold); margin-top: 3px; }
 
@@ -1263,120 +1273,36 @@ body {
 const RACE_LENGTH = 8; // questions par course
 const PITSTOP_AFTER = 4; // pause après 4 questions
 
-// SVG F1 cars - de plus en plus belles
-function carSVG(id) {
-    const cars = {
-        starter: `<svg viewBox="0 0 120 55" xmlns="http://www.w3.org/2000/svg">
-            <rect x="25" y="20" width="70" height="18" rx="5" fill="#6b7280"/>
-            <rect x="35" y="12" width="30" height="12" rx="3" fill="#6b7280"/>
-            <polygon points="20,28 10,32 10,38 25,38" fill="#6b7280"/>
-            <rect x="90" y="22" width="15" height="3" rx="1" fill="#9ca3af"/>
-            <rect x="95" y="16" width="8" height="8" rx="1" fill="#4b5563"/>
-            <circle cx="35" cy="40" r="8" fill="#1f2937"/><circle cx="35" cy="40" r="5" fill="#4b5563"/><circle cx="35" cy="40" r="2" fill="#9ca3af"/>
-            <circle cx="80" cy="40" r="8" fill="#1f2937"/><circle cx="80" cy="40" r="5" fill="#4b5563"/><circle cx="80" cy="40" r="2" fill="#9ca3af"/>
-            <text x="55" y="30" text-anchor="middle" fill="#d1d5db" font-size="7" font-weight="bold">01</text>
-        </svg>`,
-        blue: `<svg viewBox="0 0 120 55" xmlns="http://www.w3.org/2000/svg">
-            <defs><linearGradient id="gb" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#1e40af"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient></defs>
-            <rect x="20" y="20" width="78" height="17" rx="6" fill="url(#gb)"/>
-            <polygon points="30,20 45,8 70,8 70,20" fill="url(#gb)"/>
-            <polygon points="15,27 5,30 5,37 20,37" fill="#2563eb"/>
-            <rect x="92" y="21" width="18" height="3" rx="1" fill="#60a5fa"/>
-            <rect x="97" y="14" width="10" height="9" rx="2" fill="#1e3a8a"/>
-            <rect x="45" y="10" width="12" height="4" rx="1" fill="#93c5fd" opacity="0.6"/>
-            <circle cx="33" cy="39" r="8" fill="#111"/><circle cx="33" cy="39" r="5.5" fill="#333"/><circle cx="33" cy="39" r="2" fill="#60a5fa"/>
-            <circle cx="82" cy="39" r="8" fill="#111"/><circle cx="82" cy="39" r="5.5" fill="#333"/><circle cx="82" cy="39" r="2" fill="#60a5fa"/>
-            <text x="58" y="30" text-anchor="middle" fill="#bfdbfe" font-size="7" font-weight="bold">07</text>
-            <line x1="20" y1="35" x2="95" y2="35" stroke="#93c5fd" stroke-width="0.5" opacity="0.4"/>
-        </svg>`,
-        red: `<svg viewBox="0 0 120 55" xmlns="http://www.w3.org/2000/svg">
-            <defs><linearGradient id="gr" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#991b1b"/><stop offset="100%" stop-color="#ef4444"/></linearGradient></defs>
-            <rect x="18" y="19" width="82" height="17" rx="6" fill="url(#gr)"/>
-            <polygon points="28,19 42,6 72,6 72,19" fill="url(#gr)"/>
-            <polygon points="12,26 2,29 2,36 18,36" fill="#dc2626"/>
-            <rect x="94" y="20" width="20" height="3" rx="1" fill="#f87171"/>
-            <rect x="100" y="12" width="12" height="10" rx="2" fill="#7f1d1d"/>
-            <rect x="42" y="8" width="15" height="5" rx="2" fill="#fca5a5" opacity="0.5"/>
-            <rect x="30" y="22" width="4" height="10" rx="1" fill="#fbbf24"/>
-            <circle cx="32" cy="39" r="9" fill="#111"/><circle cx="32" cy="39" r="6" fill="#333"/><circle cx="32" cy="39" r="2.5" fill="#ef4444"/>
-            <circle cx="84" cy="39" r="9" fill="#111"/><circle cx="84" cy="39" r="6" fill="#333"/><circle cx="84" cy="39" r="2.5" fill="#ef4444"/>
-            <text x="60" y="29" text-anchor="middle" fill="#fef2f2" font-size="7" font-weight="bold">16</text>
-            <line x1="18" y1="34" x2="97" y2="34" stroke="#fca5a5" stroke-width="0.5" opacity="0.4"/>
-            <polygon points="72,6 78,3 78,6" fill="#991b1b"/>
-        </svg>`,
-        gold: `<svg viewBox="0 0 120 55" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#92400e"/><stop offset="50%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient>
-                <linearGradient id="gg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fde68a"/><stop offset="100%" stop-color="#d97706"/></linearGradient>
-            </defs>
-            <rect x="15" y="18" width="88" height="17" rx="7" fill="url(#gg)"/>
-            <polygon points="25,18 38,4 75,4 75,18" fill="url(#gg2)"/>
-            <polygon points="10,25 0,28 0,35 15,35" fill="#d97706"/>
-            <rect x="96" y="19" width="22" height="3" rx="1" fill="#fde68a"/>
-            <rect x="103" y="10" width="13" height="11" rx="2" fill="#92400e"/>
-            <rect x="38" y="6" width="18" height="6" rx="2" fill="#fef3c7" opacity="0.5"/>
-            <rect x="28" y="21" width="5" height="10" rx="1" fill="#fbbf24"/>
-            <circle cx="30" cy="38" r="9" fill="#111"/><circle cx="30" cy="38" r="6.5" fill="#222"/><circle cx="30" cy="38" r="3" fill="#f59e0b"/><circle cx="30" cy="38" r="1" fill="#fde68a"/>
-            <circle cx="86" cy="38" r="9" fill="#111"/><circle cx="86" cy="38" r="6.5" fill="#222"/><circle cx="86" cy="38" r="3" fill="#f59e0b"/><circle cx="86" cy="38" r="1" fill="#fde68a"/>
-            <text x="58" y="29" text-anchor="middle" fill="#451a03" font-size="8" font-weight="bold">33</text>
-            <line x1="15" y1="33" x2="100" y2="33" stroke="#fde68a" stroke-width="0.7" opacity="0.5"/>
-            <polygon points="75,4 82,1 82,4" fill="#b45309"/>
-            <circle cx="58" cy="4" r="2" fill="#fde68a" opacity="0.8"/>
-        </svg>`,
-        silver: `<svg viewBox="0 0 120 55" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="gs" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6b7280"/><stop offset="30%" stop-color="#e5e7eb"/><stop offset="60%" stop-color="#d1d5db"/><stop offset="100%" stop-color="#9ca3af"/></linearGradient>
-                <linearGradient id="gs2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f3f4f6"/><stop offset="100%" stop-color="#9ca3af"/></linearGradient>
-            </defs>
-            <rect x="12" y="17" width="93" height="18" rx="7" fill="url(#gs)"/>
-            <polygon points="22,17 35,2 78,2 78,17" fill="url(#gs2)"/>
-            <polygon points="7,24 -2,27 -2,35 12,35" fill="#d1d5db"/>
-            <rect x="98" y="18" width="24" height="3" rx="1" fill="#f3f4f6"/>
-            <rect x="106" y="8" width="14" height="12" rx="2" fill="#4b5563"/>
-            <rect x="35" y="4" width="22" height="7" rx="2" fill="#e5e7eb" opacity="0.6"/>
-            <rect x="25" y="20" width="5" height="11" rx="1" fill="#00d4aa"/>
-            <line x1="60" y1="2" x2="60" y2="17" stroke="#e5e7eb" stroke-width="0.3" opacity="0.5"/>
-            <circle cx="28" cy="38" r="10" fill="#111"/><circle cx="28" cy="38" r="7" fill="#1a1a1a"/><circle cx="28" cy="38" r="3.5" fill="#6b7280"/><circle cx="28" cy="38" r="1.5" fill="#e5e7eb"/>
-            <circle cx="88" cy="38" r="10" fill="#111"/><circle cx="88" cy="38" r="7" fill="#1a1a1a"/><circle cx="88" cy="38" r="3.5" fill="#6b7280"/><circle cx="88" cy="38" r="1.5" fill="#e5e7eb"/>
-            <text x="56" y="29" text-anchor="middle" fill="#1f2937" font-size="8" font-weight="bold">44</text>
-            <line x1="12" y1="33" x2="102" y2="33" stroke="#e5e7eb" stroke-width="0.7" opacity="0.4"/>
-            <polygon points="78,2 86,-1 86,2" fill="#6b7280"/>
-            <rect x="40" y="17" width="35" height="1" fill="#00d4aa" opacity="0.6"/>
-        </svg>`,
-        champion: `<svg viewBox="0 0 120 55" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="gc" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#1a1a2e"/><stop offset="40%" stop-color="#e10600"/><stop offset="60%" stop-color="#ff2020"/><stop offset="100%" stop-color="#fbbf24"/></linearGradient>
-                <linearGradient id="gc2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#e10600"/></linearGradient>
-                <filter id="glow"><feGaussianBlur stdDeviation="1.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-            </defs>
-            <rect x="10" y="16" width="98" height="19" rx="8" fill="url(#gc)"/>
-            <polygon points="20,16 32,0 80,0 80,16" fill="url(#gc2)"/>
-            <polygon points="5,23 -5,26 -5,35 10,35" fill="#e10600"/>
-            <rect x="100" y="17" width="26" height="3" rx="1" fill="#fbbf24"/>
-            <rect x="110" y="6" width="15" height="13" rx="2" fill="#1a1a2e" stroke="#fbbf24" stroke-width="0.5"/>
-            <rect x="32" y="2" width="25" height="8" rx="2" fill="#fde68a" opacity="0.4"/>
-            <rect x="23" y="19" width="5" height="12" rx="1" fill="#fbbf24"/>
-            <circle cx="56" cy="0" r="3" fill="#fbbf24" filter="url(#glow)" opacity="0.9"/>
-            <circle cx="26" cy="38" r="10" fill="#111"/><circle cx="26" cy="38" r="7.5" fill="#1a1a1a"/><circle cx="26" cy="38" r="4" fill="#e10600"/><circle cx="26" cy="38" r="1.5" fill="#fbbf24"/>
-            <circle cx="90" cy="38" r="10" fill="#111"/><circle cx="90" cy="38" r="7.5" fill="#1a1a1a"/><circle cx="90" cy="38" r="4" fill="#e10600"/><circle cx="90" cy="38" r="1.5" fill="#fbbf24"/>
-            <text x="55" y="28" text-anchor="middle" fill="#fde68a" font-size="9" font-weight="bold" filter="url(#glow)">★1</text>
-            <line x1="10" y1="32" x2="105" y2="32" stroke="#fbbf24" stroke-width="0.8" opacity="0.5"/>
-            <polygon points="80,0 90,-3 90,0" fill="#991b1b"/>
-            <rect x="38" y="16" width="40" height="1" fill="#fbbf24" opacity="0.7"/>
-            <circle cx="35" cy="5" r="1" fill="#fbbf24" opacity="0.6"/>
-            <circle cx="70" cy="3" r="1" fill="#fbbf24" opacity="0.6"/>
-        </svg>`,
+// Photos de voitures - de la plus pourrie à la plus belle
+function carImage(id) {
+    const images = {
+        kart:       'https://images.unsplash.com/photo-1647891938250-954892a53522?w=220&h=140&fit=crop',
+        twingo:     'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=220&h=140&fit=crop',
+        golf:       'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=220&h=140&fit=crop',
+        mini:       'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=220&h=140&fit=crop',
+        mustang:    'https://images.unsplash.com/photo-1584345604476-8ec5f82d661f?w=220&h=140&fit=crop',
+        bmw:        'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=220&h=140&fit=crop',
+        porsche:    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=220&h=140&fit=crop',
+        ferrari:    'https://images.unsplash.com/photo-1592198084033-aade902d1aae?w=220&h=140&fit=crop',
+        lambo:      'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=220&h=140&fit=crop',
+        f1:         'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=220&h=140&fit=crop',
+        champion:   'https://images.unsplash.com/photo-1621135802920-133df287f89c?w=220&h=140&fit=crop',
     };
-    return cars[id] || cars.starter;
+    return `<img src="${images[id] || images.kart}" alt="${id}" loading="lazy">`;
 }
 
 const CARS = [
-    { id:'starter', name:'Rookie F1', req:0, reqLabel:'Départ' },
-    { id:'blue', name:'Blue Lightning', req:100, reqLabel:'100 XP' },
-    { id:'red', name:'Red Flash', req:300, reqLabel:'300 XP' },
-    { id:'gold', name:'Golden Arrow', req:600, reqLabel:'600 XP' },
-    { id:'silver', name:'Silver Storm', req:1000, reqLabel:'1000 XP' },
-    { id:'champion', name:'Champion Car', req:2000, reqLabel:'2000 XP' },
+    { id:'kart',    name:'Kart Rouillé',     req:0,    reqLabel:'Départ' },
+    { id:'twingo',  name:'Vieille Twingo',   req:50,   reqLabel:'50 XP' },
+    { id:'golf',    name:'Golf de Papa',     req:150,  reqLabel:'150 XP' },
+    { id:'mini',    name:'Mini Cooper',      req:300,  reqLabel:'300 XP' },
+    { id:'mustang', name:'Ford Mustang',     req:500,  reqLabel:'500 XP' },
+    { id:'bmw',     name:'BMW M4',           req:800,  reqLabel:'800 XP' },
+    { id:'porsche', name:'Porsche 911',      req:1200, reqLabel:'1200 XP' },
+    { id:'ferrari', name:'Ferrari F40',      req:1800, reqLabel:'1800 XP' },
+    { id:'lambo',   name:'Lamborghini',      req:2500, reqLabel:'2500 XP' },
+    { id:'f1',      name:'Formule 1',        req:3500, reqLabel:'3500 XP' },
+    { id:'champion',name:'Légende F1 🏆',    req:5000, reqLabel:'5000 XP' },
 ];
 
 const TROPHIES = [
@@ -1560,11 +1486,16 @@ function updateHomeStats() {
 
     // Rank
     let rank = 'Rookie';
-    if (profile.xp >= 2000) rank = 'Légende';
-    else if (profile.xp >= 1000) rank = 'Champion';
-    else if (profile.xp >= 600) rank = 'Expert';
-    else if (profile.xp >= 300) rank = 'Confirmé';
-    else if (profile.xp >= 100) rank = 'Pilote';
+    if (profile.xp >= 5000) rank = 'Légende F1';
+    else if (profile.xp >= 3500) rank = 'Pilote F1';
+    else if (profile.xp >= 2500) rank = 'Champion';
+    else if (profile.xp >= 1800) rank = 'Expert';
+    else if (profile.xp >= 1200) rank = 'As du Volant';
+    else if (profile.xp >= 800) rank = 'Confirmé';
+    else if (profile.xp >= 500) rank = 'Rapide';
+    else if (profile.xp >= 300) rank = 'Pilote';
+    else if (profile.xp >= 150) rank = 'Apprenti';
+    else if (profile.xp >= 50) rank = 'Débutant';
     document.getElementById('pilot-rank').textContent = rank;
 
     const name = profile.name || 'Pilote';
@@ -1573,7 +1504,7 @@ function updateHomeStats() {
 
     // Avatar based on best car
     const bestCar = [...CARS].reverse().find(c => profile.xp >= c.req);
-    if (bestCar) document.getElementById('pilot-avatar').innerHTML = carSVG(bestCar.id);
+    if (bestCar) document.getElementById('pilot-avatar').innerHTML = carImage(bestCar.id);
 }
 
 function saveName(val) {
@@ -2540,7 +2471,7 @@ function renderGarage() {
     carsGrid.innerHTML = CARS.map(car => {
         const unlocked = profile.xp >= car.req;
         return `<div class="car-card ${unlocked ? 'unlocked' : 'locked'}">
-            <span class="car-emoji">${carSVG(car.id)}</span>
+            <span class="car-emoji">${carImage(car.id)}</span>
             <span class="car-name">${car.name}</span>
             <span class="car-req">${unlocked ? '✅' : car.reqLabel}</span>
         </div>`;
